@@ -1,0 +1,2 @@
+Department,FieldType,Name,Description,DisplayName,StaticName,Group,Hidden,Required,Sealed,ShowInDisplayForm,ShowInEditForm,ShowInListSettings,ShowInNewForm
+Planning,TaxonomyFieldType,PageType,Specify the type of page.,Page Type,PageType,_Custom_Columns,FALSE,TRUE,FALSE,TRUE,TRUE,TRUE,TRUE
