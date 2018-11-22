@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
 	Warm up SharePoint IIS W3WP memory cache by loading pages from WebRequest
 
@@ -218,7 +218,7 @@ Function WarmUp() {
 			}
 			NavigateTo $url
 			NavigateTo $url"_api/web"
-			NavigateTo $url"_api/_trust" # for ADFS, first user login
+			#NavigateTo $url"_api/_trust" # for ADFS, first user login
 			NavigateTo $url"_layouts/viewlsts.aspx"
 			NavigateTo $url"_vti_bin/UserProfileService.asmx"
 			NavigateTo $url"_vti_bin/sts/spsecuritytokenservice.svc"
@@ -394,11 +394,11 @@ Function SaveLog($id, $txt, $error) {
     if (!$skiplog) {
         if (!$error) {
             # Success
-            $global:msg += $txt
+            $global:msg += "`n" + $txt
             Write-EventLog -LogName Application -Source "SPBestWarmUp" -EntryType Information -EventId $id -Message $global:msg
         } else {      
             # Error
-			$global:msg += "ERROR`n"
+			$global:msg += "`nERROR`n"
             $global:msg += $error.Message + "`n" + $error.ItemName
             Write-EventLog -LogName Application -Source "SPBestWarmUp" -EntryType Warning -EventId $id -Message $global:msg
         }
@@ -448,20 +448,17 @@ if (!$skipadmincheck -and !([Security.Principal.WindowsPrincipal] [Security.Prin
 			$caTitle = Get-SPWeb $_.Url | Select-Object Title
 		}
 		switch -Wildcard ($caTitle) {
-			"*PROD*" {
-				#NavigateTo "http://portal/popularPage.aspx"
-				#NavigateTo "http://portal/popularPage2.aspx"
-				#NavigateTo "http://portal/popularPage3.aspx
+			"*PRD*" {
+				NavigateTo "http://prdspace.awp.nhs.uk/sites/Meetings"
+				NavigateTo "http://meetingportal.awp.nhs.uk/sites/Meetings"
 			}
-			"*TEST*" {
-				#NavigateTo "http://portal/popularPage.aspx"
-				#NavigateTo "http://portal/popularPage2.aspx"
-				#NavigateTo "http://portal/popularPage3.aspx
+			"*UAT*" {
+				NavigateTo "http://uatspace.awp.nhs.uk/sites/Meetings"
+				NavigateTo "http://uatmeetingportal.awp.nhs.uk/sites/Meetings"
+				NavigateTo "http://uatspace.awp.nhs.uk/Pages/Ourspace.aspx"
 			}
 			default {
-				#NavigateTo "http://portal/popularPage.aspx"
-				#NavigateTo "http://portal/popularPage2.aspx"
-				#NavigateTo "http://portal/popularPage3.aspx
+				NavigateTo "http://portal/popularPage.aspx"
 			}
 		}
 		SaveLog 1 "Operation completed successfully"
