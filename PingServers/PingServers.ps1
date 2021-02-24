@@ -3,7 +3,7 @@ cls
 Add-Type -assembly "Microsoft.Office.Interop.Outlook"
 Add-Type -assembly "System.Runtime.Interopservices"
 
-$EmailTo = "peter.core@nhs.net"
+$EmailTo = "ENTER EMAIL ADDRESS HERE"
 
 $WordDocumentUrl = "http://ourspace/SystemTest/Shared%20Documents/Hello%20World.docx?d=wc35d546a8af949cda1c3fdc56160ebdf&Source=http%3A%2F%2Fourspace%2FSystemTest%2FShared%2520Documents%2FForms%2FAllItems%2Easpx"
 
