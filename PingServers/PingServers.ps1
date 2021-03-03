@@ -1,9 +1,11 @@
 cls
 
+$ErrorActionPreference = "Stop"
+
 Add-Type -assembly "Microsoft.Office.Interop.Outlook"
 Add-Type -assembly "System.Runtime.Interopservices"
 
-$EmailTo = "ENTER EMAIL ADDRESS HERE"
+$EmailTo = "peter.core@nhs.net"
 
 $WordDocumentUrl = "http://ourspace/SystemTest/Shared%20Documents/Hello%20World.docx?d=wc35d546a8af949cda1c3fdc56160ebdf&Source=http%3A%2F%2Fourspace%2FSystemTest%2FShared%2520Documents%2FForms%2FAllItems%2Easpx"
 
@@ -24,12 +26,19 @@ Function Send-Email( $outlook, $wfe, $url, $message ){
 }
 
 Function NavigateTo([string] $url, [string] $wfe, $page, $hostHeaderArray, $searchString)  {
+    
+    if ( $hostHeaderArray -eq $null) {
+        $hostHeaderArray = @{ "Cache-Control"="no-cache" }
+    } else {
+        $hostHeaderArray.Add( "Cache-Control", "no-cache" )
+    }
+
 	if ($url.ToUpper().StartsWith("HTTP") -and !$url.EndsWith("/ProfileService.svc","CurrentCultureIgnoreCase")) {
 		#WriteLog "  $url" -NoNewLine
 		# WebRequest command line
         Write-Host "Attempting to access" $wfe $page "..."
 		try {
-			$wr = Invoke-WebRequest -Uri $url -Headers $hostHeaderArray -UseBasicParsing -UseDefaultCredentials -TimeoutSec 120 
+			$wr = Invoke-WebRequest -Uri $url -Headers $hostHeaderArray -UseBasicParsing -UseDefaultCredentials -TimeoutSec 120
 			#FetchResources $url $wr.Images
 			#FetchResources $url $wr.Scripts
             if ( $wr.Content -like $searchString ) {
@@ -45,7 +54,7 @@ Function NavigateTo([string] $url, [string] $wfe, $page, $hostHeaderArray, $sear
             echo $_.Exception | format-list -force
 			$httpCode = $_.Exception.Response.StatusCode.Value__
 			if ($httpCode) {
-				Write-Host "HttpCode = [$httpCode]" Yellow
+				Write-Host "HttpCode = [$httpCode]" -ForegroundColor Yellow
             }
 
             $global:pingFailure = $true
