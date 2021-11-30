@@ -2,19 +2,9 @@ cls
 
 $ErrorActionPreference = "Stop"
 
-cd $PSScriptRoot
-
-$logName = $MyInvocation.MyCommand.Name
-$hour = $(get-date).Hour
-$minute = $(get-date).Minute
-
-Start-Transcript -Path ".\Transcripts\$logName-$hour-$minute.txt"
-Write-Host "Note: This script is designed to be run from a scheduled task, at 5 minute intervals. This avoids issues with DNS cache."
-
 Add-Type -assembly "Microsoft.Office.Interop.Outlook"
 Add-Type -assembly "System.Runtime.Interopservices"
 
-#$EmailTo = "peter.core@nhs.net; awp.webmaster@nhs.net"
 $EmailTo = "peter.core@nhs.net"
 
 $WordDocumentUrl = "http://ourspace/SystemTest/Shared%20Documents/Hello%20World.docx?d=wc35d546a8af949cda1c3fdc56160ebdf&Source=http%3A%2F%2Fourspace%2FSystemTest%2FShared%2520Documents%2FForms%2FAllItems%2Easpx"
@@ -48,7 +38,7 @@ Function NavigateTo([string] $url, [string] $wfe, $page, $hostHeaderArray, $sear
 		# WebRequest command line
         Write-Host "Attempting to access" $wfe $page "..."
 		try {
-			$wr = Invoke-WebRequest -Uri $url -Headers $hostHeaderArray -UseBasicParsing -UseDefaultCredentials -TimeoutSec 120 -DisableKeepAlive 
+			$wr = Invoke-WebRequest -Uri $url -Headers $hostHeaderArray -UseBasicParsing -UseDefaultCredentials -TimeoutSec 120
 			#FetchResources $url $wr.Images
 			#FetchResources $url $wr.Scripts
             if ( $wr.Content -like $searchString ) {
@@ -152,63 +142,20 @@ Function Exit_Outlook() {
     }
 }
 
-Function Skip_CertChecks() {
-
-    if (-not ([System.Management.Automation.PSTypeName]'ServerCertificateValidationCallback').Type) {
-        $certCallback=@"
-            using System;
-            using System.Net;
-            using System.Net.Security;
-            using System.Security.Cryptography.X509Certificates;
-            public class ServerCertificateValidationCallback
-            {
-                public static void Ignore()
-                {
-                    if(ServicePointManager.ServerCertificateValidationCallback ==null)
-                    {
-                        ServicePointManager.ServerCertificateValidationCallback += 
-                            delegate
-                            (
-                                Object obj, 
-                                X509Certificate certificate, 
-                                X509Chain chain, 
-                                SslPolicyErrors errors
-                            )
-                            {
-                                return true;
-                            };
-                    }
-                }
-            }
-"@
-
-    Add-Type $certCallback
-    }
-
-    [ServerCertificateValidationCallback]::Ignore();
-}
-
 cd $PSScriptRoot
 
 $outlook = Start-Outlook 
 
-Skip_CertChecks
-
-# Maybe this will help - https://stackoverflow.com/questions/18556456/invoke-webrequest-working-after-server-is-unreachable
-#[System.Net.ServicePointManager]::DnsRefreshTimeout = 0
 
 # Ping the Urls on the servers and search returned HTML body content for expected strings
-$keepGoing = $true
 
-while (!$global:pingFailure -and $keepGoing) {
+while (!$global:pingFailure) {
 
-    $keepGoing = $false # Only run once from scheduled task
     Test-Server -ipAddress 10.238.241.95 -wfe WFE11
     Test-Server -ipAddress 10.238.241.96 -wfe WFE12
     Test-Server -ipAddress 10.238.241.103 -wfe WFE21
     Test-Server -ipAddress 10.238.241.104 -wfe WFE22
 
-    <# #>
     .\AddToHosts.ps1  -DesiredIP 10.238.241.99 -CheckIPAddressOnly $true
     NavigateTo -url "https://rvn-oos-pool-1.awp.nhs.uk/hosting/discovery" -wfe "OOS11" -page "WOPI Discovery" -searchString "*wopi-discovery*"
     NavigateTo -url $WordDocumentUrl -wfe "OOS11" -page "Hello World.docx" -searchString "*Hello World*"  
@@ -218,11 +165,6 @@ while (!$global:pingFailure -and $keepGoing) {
     NavigateTo -url "https://rvn-oos-pool-1.awp.nhs.uk/hosting/discovery" -wfe "OOS21" -page "WOPI Discovery" -searchString "*wopi-discovery*"
     NavigateTo -url $WordDocumentUrl -wfe "OOS21" -page "Hello World.docx" -searchString "*Hello World*"  
     .\RemoveFromHosts.ps1 -DesiredIP 10.238.241.107 -CheckIPAddressOnly $true
-    <# #>
-
-    if (!$keepGoing){
-        break
-    }
 
     if (!$global:pingFailure){
         Write-Host $(Get-Date -DisplayHint Time) -ForegroundColor Gray
@@ -242,5 +184,3 @@ while (!$global:pingFailure -and $keepGoing) {
 }
 
 Exit_Outlook 
-
-Stop-Transcript
